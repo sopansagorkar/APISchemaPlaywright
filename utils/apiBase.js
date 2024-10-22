@@ -1,7 +1,5 @@
 const { expect } = require('@playwright/test');
-const fs = require('fs');
-const https = require('https');
-const uuid = require('uuid');
+const Ajv=require('ajv');
 
 exports.apiBase = class apiBase {
   static requestData;
@@ -59,11 +57,11 @@ exports.apiBase = class apiBase {
   }
 
   async makeAuthorizationPostRequest(path) {
-    return await this.request.post(path,{headers:{'Content-Type':'application/json'}});
+    return await this.request.post(path,{headers:{'Content-Type':'application/json'},data:apiBase.requestData});
   }
 
   async makeAuthorizationPutRequest(path) {
-    return await this.request.put(path,{headers:{'Content-Type':'application/json'}});
+    return await this.request.put(path,{headers:{'Content-Type':'application/json'},data:apiBase.requestData});
   }
   async makeAuthorizationDeleteRequest(path) {
     return await this.request.delete(path,{headers:{'Content-Type':'application/json'}});
@@ -97,4 +95,16 @@ exports.apiBase = class apiBase {
   async validateInternalServerErrorResponse(response) {
     expect(response.status()).toBe(500);
   }
+
+  async validateApiResponse(schema, responseData) {
+    const ajv = new Ajv(); // Options can be passed if needed
+    const validate = ajv.compile(schema); // Compile the provided schema
+    const valid = validate(responseData); // Validate the response data
+
+    if (!valid) {
+        console.log(validate.errors); // Log validation errors if there are any
+    }
+
+    expect(valid).toBe(true); // Ensure the response is valid based on schema
+}
 }
